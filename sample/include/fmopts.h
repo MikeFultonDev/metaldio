@@ -6,6 +6,7 @@
     DBG_Opts dbg;
     int help:1;
     int map:1;
+    int fmdbg:1;
   } FM_Opts;
 
   void init_opts(FM_Opts* opts);

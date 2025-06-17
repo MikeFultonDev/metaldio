@@ -1,0 +1,19 @@
+#!/bin/sh
+
+out="$(hlq).ASMXMP.OUT"
+drm "${out}"
+dtouch -tseq -l2048 -rvb "${out}"
+
+set -e
+
+rdlib=$(echo "$(hlq).ASMXMP.DATA")
+
+mem=$(mls "${rdlib}")
+if [ "${mem}" != "NEWMEM" ]; then
+  echo "Run CRTMEM to create the member before trying to read"
+  exit 4
+fi
+
+xmplib="$(hlq).ASMXMP.LOAD"
+echo "Output in ${out}"
+mvscmd --steplib=$xmplib --indd="${rdlib}" --pgm=RDJFCB --outdd="${out}"

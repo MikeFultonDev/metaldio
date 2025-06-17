@@ -8,7 +8,6 @@ csource := $(shell find $(SRCDIR) -type f -name *.c)
 cobjs   := $(patsubst $(SRCDIR)/%,$(BLDDIR)/%,$(csource:.c=.o))
 objects := $(cobjs)
 cdeps   := $(patsubst $(SRCDIR)/%,$(DEPDIR)/%,$(csource:.c=.d))
-pgms    := $(BINDIR)/f2m $(BINDIR)/m2f $(BINDIR)/mlsx $(BINDIR)/mchtag $(BINDIR)/readupdate $(BINDIR)/readwriterec
 
 all-services: $(ARDIR)/$(archive)
 
