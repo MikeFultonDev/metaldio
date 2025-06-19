@@ -16,21 +16,12 @@ RDJFCB   RMODE ANY
 *------------------------------------------------------------------- 
          BAKR  R14,0                use linkage stack 
          LARL  R12,DATCONST         setup base for CONSTANTS
-         USING DATCONST,R12         "baseless" CSECT 
-        STORAGE OBTAIN,LENGTH=WALEN,EXECUTABLE=NO,LOC=24,CHECKZERO=YES
-         LR    R10,R1               R10 points to Working Storage 
-         USING WAREA,R10            BASE FOR DSECT 
-*
-* Clear storage
-*
-         CHI   R15,X'0014'           X'14': storage zeroed
-         BE    STG_WA_CLEAR
-         LR    R2,R1                 system did not clear, do ourselves
-         LA    R3,WALEN
-         XR    R5,R5
-         MVCL  R2,R4                 clear storage (pad byte zero)
+         USING DATCONST,R12         "baseless" CSECT
 
-STG_WA_CLEAR DS 0H
+         LA    R1,WALEN
+         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+         LR    R10,R1
+         USING WAREA,R10
 *
          MVC   SAVEA+4(4),=C'F1SA'  linkage stack convention 
          LAE   R13,SAVEA            ADDRESS OF OUR SA IN R13 
@@ -42,20 +33,11 @@ STG_WA_CLEAR DS 0H
 *
 * DCB has to be below the line
 *
-        STORAGE OBTAIN,LENGTH=DCBLEN,EXECUTABLE=NO,LOC=24,CHECKZERO=YES
-         LR R8,R1                   R8 points to Input DCB
+         LA    R1,DCBLEN
+         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+         LR    R8,R1
          USING DCBAREA,R8
-*
-* Clear storage
-*
-         CHI   R15,X'0014'           X'14': storage zeroed
-         BE    STG_DCB_CLEAR
-         LR    R2,R1                 system did not clear, do ourselves
-         LA    R3,DCBLEN
-         XR    R5,R5
-         MVCL  R2,R4                 clear storage (pad byte zero)
 
-STG_DCB_CLEAR DS 0H
 *
 *
 * Copy the DCB template into 24-bit storage
@@ -83,21 +65,11 @@ OPEN_SUCCESS DS 0H
 *
 * Write DCB has to be below the line
 *
-        STORAGE OBTAIN,LENGTH=WDCBLEN,EXECUTABLE=NO,                   x
-               LOC=24,CHECKZERO=YES
-         LR R7,R1                   R7 points to Output DCB
+         LA    R1,WDCBLEN
+         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+         LR    R7,R1
          USING WDCBAREA,R7
-*
-* Clear storage
-*
-         CHI   R15,X'0014'           X'14': storage zeroed
-         BE    STG_WDCB_CLEAR
-         LR    R2,R1                 system did not clear, do ourselves
-         LA    R3,WDCBLEN
-         XR    R5,R5
-         MVCL  R2,R4                 clear storage (pad byte zero)
 
-STG_WDCB_CLEAR DS 0H
 *
 *
 * Copy the DCB template into 24-bit storage
@@ -121,30 +93,39 @@ WOPEN_SUCCESS DS 0H
 *
 * JFCB DCB has to be below the line
 *
-        STORAGE OBTAIN,LENGTH=JFCB_DCBLEN,EXECUTABLE=NO,               x
-               LOC=24,CHECKZERO=YES
-         LR R9,R1                   R9 points to JFCB DCB
-         USING JFCB_DCBAREA,R9
-*
-* Clear storage
-*
-         CHI   R15,X'0014'           X'14': storage zeroed
-         BE    STG_JFCB_DCB_CLEAR
-         LR    R2,R1                 system did not clear, do ourselves
-         LA    R3,JFCB_DCBLEN
-         XR    R5,R5
-         MVCL  R2,R4                 clear storage (pad byte zero)
-
-STG_JFCB_DCB_CLEAR DS 0H
+         LA    R1,JFCB_DCBLEN
+         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+         LR    R9,R1
+         USING JFCB_DCB,R9
 
 *
 *
 * Copy the DCB template into 24-bit storage
 * Perform the RDJFCB to get a member
 *
-RDJFCBE  DS  0H
-         MVC JFCB_DCB(JFCB_DCBLEN),CONST_JFCB_DCB 
+* Example to read PATH info from JFCB:                               *
+*   https://tech.mikefulton.ca/DDNameReadDSAndPathEntries            *
+* RDJFCB Info: https://tech.mikefulton.ca/RDJFCBOverview             *
+* DCB Exit List: https://tech.mikefulton.ca/DCBExitList              *
 
+RDJFCBE  DS  0H
+         MVC JFCB_DCB(JFCB_DCBLEN),CONST_JFCB_DCB
+*         
+         LA    R6,0
+         B     JFCB_OK
+*
+         RDJFCB MF=(E,JFCB_DCB)
+         LTR   R15,R15
+         BZ    JFCB_OK
+*
+         LHI R8,JFCB_FAIL_MASK
+         LR  R6,R15                put err code in R6
+         OR  R6,R8
+         B   DONE            
+
+INERROR  DS 0H
+
+JFCB_OK  DS 0H
 *
 * Write result to OUTDD
 *
@@ -184,9 +165,11 @@ WCLOSE_SUCCESS DS 0H
 *------------------------------------------------------------------- 
 DONE     DS 0H
 *
-* Free DCB storage
+* Free storage
 *
 RLSE_STG DS 0H
+        STORAGE RELEASE,ADDR=(R7),LENGTH=WDCBLEN,EXECUTABLE=NO 
+         DROP R7
         STORAGE RELEASE,ADDR=(R8),LENGTH=DCBLEN,EXECUTABLE=NO 
          DROP R8
         STORAGE RELEASE,ADDR=(R9),LENGTH=JFCB_DCBLEN,EXECUTABLE=NO 
@@ -195,6 +178,31 @@ RLSE_WA  DS 0H
          STORAGE RELEASE,ADDR=(R10),LENGTH=WALEN,EXECUTABLE=NO 
          LR    R15,R6               get saved rc into R15
          PR    ,                    return to caller 
+
+*
+* STG_OBTAIN_24: 
+* Acquire 24-bit storage and clear to 0
+* - Linkage: Relative branch to here, Return to R14
+* - Input R1: length of storage
+* - Clobbers R 2,3,4,5,6,14,15
+* - Output R1: address of allocated storage
+*
+STG_OBTAIN_24 DS 0D
+         LR    R2,R1               R2 is copy of length 
+         LR    R6,R14              R6 is copy of return address
+        STORAGE OBTAIN,LENGTH=(R1),EXECUTABLE=NO,LOC=24,CHECKZERO=YES
+*
+* Clear storage
+*
+         CHI   R15,X'0014'           X'14': storage zeroed
+         BE    STG_CLEAR
+         LR    R3,R2                 copy length into R3
+         LR    R2,R1                 system did not clear, do ourselves
+         XR    R5,R5
+         MVCL  R2,R4                 clear storage (pad byte zero)
+
+STG_CLEAR DS 0H
+          BR R6                      Return
 
 *------------------------------------------------------------------- 
 * constants and literal pool                                       - 
@@ -205,10 +213,19 @@ DCBLEN    EQU   *-CONST_DCB
 CONST_WDCB  DCB   DSORG=PS,MACRF=(PM),DDNAME=OUTDD,DCBE=CONST_WDCBE
 WDCBLEN   EQU   *-CONST_WDCB
 
-CONST_JFCB_DCB  DCB   DSORG=PS,MACRF=(R),DDNAME=INDD
+CONST_JFCB_DCB DCB DSORG=PO,MACRF=R,DDNAME=INDD,                       x
+               EXLST=(0)
 JFCB_DCBLEN    EQU   *-CONST_JFCB_DCB
-CONST_DCBE DCBE  RMODE31=BUFF,EODAD=EOM
-CONST_WDCBE DCBE  RMODE31=BUFF
+
+INEXLST  DC    0F'0',AL1(EXLARL)      ENTRY CODE TO RETRIEVE
+*                                     ALLOCATION INFORMATION
+         DC    AL3(0)                 ADDR OF ALLOCATION RETRIEVAL LIST
+         DC    AL1(EXLLASTE+EXLRJFCB) ENTRY CODE TO RETRIEVE FIRST JFCB
+*                                     AND INDICATE LAST ENTRY IN LIST
+         DC    AL3(0)                 ADDR OF JFCB FOR FIRST DATA SET
+
+CONST_DCBE     DCBE  RMODE31=BUFF,EODAD=EOM
+CONST_WDCBE    DCBE  RMODE31=BUFF
 
 CONST_OPEN OPEN (*-*,(INPUT)),MODE=31,MF=L
 OPENLEN   EQU   *-CONST_OPEN
@@ -242,10 +259,20 @@ WALEN       EQU  *-SAVEA
 
 DCBAREA     DSECT
 LIB_DCB     DS   CL(DCBLEN)
-JFCB_DCBAREA DSECT
+JFCB_AREA DSECT
 JFCB_DCB    DS   CL(JFCB_DCBLEN)
 WDCBAREA DSECT
 WDCB        DS   CL(WDCBLEN)
+
+*
+*  AN ALLOCATION RETRIEVAL LIST FOLLOWS, POINTED TO BY DCB EXIT LIST.
+*
+SLBSTRT  IHAARL DSECT=YES,PREFIX=SLB
+SLB_LEN  EQU *-SLBSTRT
+LIBJFCB  DS     CL176' '         FIRST JFCB
+LIBJFCBLEN EQU *-LIBJFCB
+         IHAARA ,
+         IHAEXLST ,             DCB exit list mapping
 
 *------------------------------------------------------------------- 
 * Equates                                                            - 
@@ -253,9 +280,8 @@ WDCB        DS   CL(WDCBLEN)
 OPEN_FAIL_MASK EQU   16
 RDJFCB_FAIL_MASK EQU 32
 CLOSE_FAIL_MASK EQU  64
-WOPEN_FAIL_MASK EQU   7
-WCLOSE_FAIL_MASK EQU 15
-
-
+WOPEN_FAIL_MASK EQU  48
+WCLOSE_FAIL_MASK EQU 80
+JFCB_FAIL_MASK EQU   96
 
          END   RDJFCB    
