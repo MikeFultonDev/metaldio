@@ -112,6 +112,8 @@ WOPEN_SUCCESS DS 0H
 *
          LA    R1,JFCBLEN
          BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+         MVI   0(R1),C' '
+         MVC   1(JFCBLEN-1,R1),0(R1)   Set storage to blanks
 
 * Store JFCB entry pointer into Exit List
          STCM  R1,B'0111',EXIT_JFCB_ADDR
