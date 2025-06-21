@@ -23,12 +23,8 @@ export AS=as
 export ASFLAGS="--SYSPARM'(${ASAMODE})',GOFF,LIST,SUPRWARN'(425,434)'"
 export CC=xlc
 
-#
-# msf - for now, build only with debug. OPT is exposing a failure
-# in f2m writing VB files, e.g. write a listing to a VB PDS member
-#
 export CFLAGS="-Wc,OPT'(3)',${DATA_MODEL},${INFO}"
-export CFLAGS="-Wc,debug,${DATA_MODEL},AGGR,${LIST},${INFO}"
+#export CFLAGS="-Wc,debug,${DATA_MODEL},AGGR,${LIST},${INFO}"
 export CORE_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/core/intinclude -I${ASMDIOROOT}/core/include"
 export SERVICES_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/core/include -I${ASMDIOROOT}/services/include -I${ASMDIOROOT}/services/intinclude"
 export SAMPLE_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/sample/include -I${ASMDIOROOT}/services/include"

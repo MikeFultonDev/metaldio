@@ -276,6 +276,11 @@ static int write_block(FM_BPAMHandle* bh, const DBG_Opts* opts)
     fprintf(stderr, "Unable to perform WRITE. rc:%d\n", rc);
     return rc;
   }
+  rc = CHECK(bh->decb);
+  if (rc) {
+    fprintf(stderr, "Unable to perform CHECK on WRITE. rc:%d\n", rc);
+    return rc;
+  }  
 
   if (!bh->memstart_ttr_known) {
     bh->memstart_ttr = NOTE(bh->dcb);

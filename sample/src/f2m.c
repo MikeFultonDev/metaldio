@@ -32,6 +32,7 @@ Options:\n\
   -h, --help          Print out this help.\n\
   -v, --verbose       Provide verbose output.\n\
   -d, --debug         Provide debug output.\n\
+  -D, --fmdebug       Provide fm specific debug output.\n\  
   -m, --mapexttollq   Treat the dataset name as a dataset prefix and\n\
                       map the extension to a a low-level qualifier (default).\n\
   -i, --ignoreext     Do not perform any mapping with the extension\n\
@@ -184,7 +185,7 @@ static int read_line(FM_FileHandle* fh, const FM_Opts* opts)
 static FILE* debug_fp = NULL;
 static void open_debug_file(const char* dataset, const char* member, const FM_Opts* opts)
 {
-  if (!opts->dbg.debug) {
+  if (!opts->fmdbg) {
     return;
   }
   const char debug_fmt[] = "/tmp/%s.%s";
@@ -202,7 +203,7 @@ static void open_debug_file(const char* dataset, const char* member, const FM_Op
 
 static void write_debug_line(FM_BPAMHandle* bh, const FM_FileHandle* fh, const FM_Opts* opts)
 {
-  if (!opts->dbg.debug) {
+  if (!opts->fmdbg) {
     return;
   }
   if (fh->active.record_length > 0) {
@@ -216,7 +217,7 @@ static void write_debug_line(FM_BPAMHandle* bh, const FM_FileHandle* fh, const F
 
 static void close_debug_file(const FM_Opts* opts)
 {
-  if (!opts->dbg.debug) {
+  if (!opts->fmdbg) {
     return;
   }
   fclose(debug_fp);
@@ -266,7 +267,7 @@ static int copy_into_record_buffer(FM_BPAMHandle* bh, FM_FileHandle* fh, char* r
 
 static int add_line(FM_BPAMHandle* bh, FM_FileHandle* fh, const FM_Opts* opts)
 {
-  char rec_buff[REC_LEN+1];
+  char rec_buff[REC_LEN];
   int rec_len;
   int truncated;
   debug(&opts->dbg, "Add Line. Active (%d,%d) Inactive (%d,%d)\n", 
@@ -550,3 +551,4 @@ int main(int argc, char* argv[])
   rc = copy_files_to_members(&globset, table, dataset_pattern, &opts);
   return 0;
 }
+ 
