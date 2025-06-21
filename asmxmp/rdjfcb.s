@@ -37,11 +37,7 @@ RDJFCB   RMODE ANY
          BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
          LR    R8,R1
          USING DCBAREA,R8
-<<<<<<< HEAD
 *         LINK EP=SLDXQWT           Connect to SLDMVSS
-=======
-
->>>>>>> 757f18101a64618248c22581b8e0fe7f76d254e7
 *
 *
 * Copy the DCB template into 24-bit storage
