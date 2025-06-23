@@ -31,38 +31,6 @@ RDJFCB   RMODE ANY
 *------------------------------------------------------------------- 
 
 *
-* DCB has to be below the line
-*
-         LA    R1,DCBLEN
-         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
-         LR    R8,R1
-         USING DCBAREA,R8
-*         LINK EP=SLDXQWT           Connect to SLDMVSS
-*
-*
-* Copy the DCB template into 24-bit storage
-* The OPEN_PARMS and DCBE is 31-bit to minimize below-line stg
-*
-         XR R6,R6                   Clear R6 (error code)
-LIB_OPEN  DS  0H
-         MVC LIB_DCB(DCBLEN),CONST_DCB
-         MVC OPEN_PARMS(OPENLEN),CONST_OPEN
-        OPEN (LIB_DCB,INPUT),MF=(E,OPEN_PARMS),MODE=31
-         CIJE R15,0,OPEN_SUCCESS
-*
-OPEN_FAIL DS  0H
-         LHI R0,OPEN_FAIL_MASK
-         LR  R6,R15                put err code in R6
-         OR  R6,R0
-         B   DONE
-
-EOM       DS  0H
-          LA  R2,1
-          BR  R14
-*
-OPEN_SUCCESS DS 0H
-
-*
 * Write DCB has to be below the line
 *
          LA    R1,WDCBLEN
@@ -161,19 +129,6 @@ JFCB_OK  DS 0H
 WRITE_RESULT DS 0H
          MVC OUTREC(OUTMSGLEN),OUTMSG
          PUT WDCB,OUTREC      
-*
-LIB_CLOSE  DS 0H
-         MVC CLOSE_PARMS(CLOSELEN),CONST_CLOSE
-         CLOSE (LIB_DCB),MF=(E,CLOSE_PARMS),MODE=31
-         CIJE R15,0,CLOSE_SUCCESS
-*
-CLOSE_FAIL DS  0H
-         LHI R0,CLOSE_FAIL_MASK
-         LR  R6,R15                put err code in R6
-         OR  R6,R0
-         B   DONE
-*
-CLOSE_SUCCESS DS 0H
 
 *
 WCLOSE  DS 0H
@@ -199,8 +154,6 @@ DONE     DS 0H
 RLSE_STG DS 0H
         STORAGE RELEASE,ADDR=(R7),LENGTH=WDCBLEN,EXECUTABLE=NO 
          DROP R7
-        STORAGE RELEASE,ADDR=(R8),LENGTH=DCBLEN,EXECUTABLE=NO 
-         DROP R8
 *
 * There are more control blocks to free here... msf...
 *
@@ -240,18 +193,10 @@ STG_CLEAR DS 0H
 * constants and literal pool                                       - 
 *------------------------------------------------------------------- 
 DATCONST   DS    0D                 Doubleword alignment for LARL
-CONST_DCB  DCB   DSORG=PO,MACRF=(R),DDNAME=INDD,DCBE=CONST_DCBE
-DCBLEN    EQU   *-CONST_DCB
 CONST_WDCB  DCB   DSORG=PS,MACRF=(PM),DDNAME=OUTDD,DCBE=CONST_WDCBE
 WDCBLEN   EQU   *-CONST_WDCB
 
-CONST_DCBE     DCBE  RMODE31=BUFF,EODAD=EOM
 CONST_WDCBE    DCBE  RMODE31=BUFF
-
-CONST_OPEN OPEN (*-*,(INPUT)),MODE=31,MF=L
-OPENLEN   EQU   *-CONST_OPEN
-CONST_CLOSE CLOSE (*-*),MODE=31,MF=L
-CLOSELEN  EQU   *-CONST_CLOSE
 
 CONST_WOPEN OPEN (*-*,(OUTPUT)),MODE=31,MF=L
 WOPENLEN   EQU   *-CONST_WOPEN
@@ -288,25 +233,24 @@ ARL_LEN  EQU *-CONST_ARLLIST
 *------------------------------------------------------------------- 
 WAREA       DSECT 
 SAVEA       DS    18F 
-OPEN_PARMS  DS CL(OPENLEN)
-CLOSE_PARMS DS CL(CLOSELEN)
 WOPEN_PARMS  DS CL(WOPENLEN)
 WCLOSE_PARMS DS CL(WCLOSELEN)
 OUTREC       DS CL(2048+4)
 WALEN       EQU  *-SAVEA
 
-DCBAREA     DSECT
-LIB_DCB     DS   CL(DCBLEN)
-
 WDCBAREA DSECT
-WDCB        DS   CL(WDCBLEN)
+WDCB        DS  CL(WDCBLEN)
+
+JFCB_DCB DSECT
+         DS    CL(JFCB_DCBLEN)
+
+         DCBD  DSORG=PO
 
 JFCB     DS     CL176' '         FIRST JFCB
 JFCBLEN  EQU *-JFCB
 
          IHAARA ,
          IHAEXLST ,             DCB exit list mapping
-         DCBD  DSORG=XE
 
 EXIT_LIST      DSECT
 EXIT_EC_ARL    DS AL1
@@ -317,11 +261,9 @@ EXIT_JFCB_ADDR DS AL3
 *------------------------------------------------------------------- 
 * Equates                                                            - 
 *------------------------------------------------------------------- 
-OPEN_FAIL_MASK EQU   16
-RDJFCB_FAIL_MASK EQU 32
-CLOSE_FAIL_MASK EQU  64
-WOPEN_FAIL_MASK EQU  48
-WCLOSE_FAIL_MASK EQU 80
-JFCB_FAIL_MASK EQU   96
+JFCB_FAIL_MASK EQU    16
+RDJFCB_FAIL_MASK EQU  32
+WOPEN_FAIL_MASK EQU   64
+WCLOSE_FAIL_MASK EQU 128
 
          END   RDJFCB    
