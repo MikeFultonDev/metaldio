@@ -78,13 +78,13 @@ WOPEN_SUCCESS DS 0H
 *
 * Get storage for First JFCB entry in R1 and clear it
 *
-         LA    R1,JFCBLEN
-         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
-         MVI   0(R1),C' '
-         MVC   1(JFCBLEN-1,R1),0(R1)   Set storage to blanks
+*         LA    R1,JFCBLEN
+*         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
+*         MVI   0(R1),C' '
+*         MVC   1(JFCBLEN-1,R1),0(R1)   Set storage to blanks
 
 * Store JFCB entry pointer into Exit List
-         STCM  R1,B'0111',EXIT_JFCB_ADDR
+*         STCM  R1,B'0111',EXIT_JFCB_ADDR
 
 *
 * Get storage for JFCB DCB and initialize it
@@ -209,17 +209,16 @@ OUTMSG_SPAN DC H'00'
 OUTMSG_TXT  DC C'Hi'
 OUTMSGLEN EQU *-OUTMSG
 
-CONST_JFCB_DCB DCB DSORG=PO,MACRF=R,DDNAME=INDD,                       x
-               EXLST=(0)              
+CONST_JFCB_DCB DCB MACRF=E,DDNAME=INDD,EXLST=(0)              
 JFCB_DCBLEN    EQU   *-CONST_JFCB_DCB
 
 CONST_EXLST DC 0F'0'
-         DC    AL1(EXLARL)            ENTRY CODE TO RETRIEVE
+*         DC    AL1(EXLRJFCB)          ENTRY CODE FOR FIRST JFCB
+*         DC    AL3(0)                 ADDR OF JFCB FOR FIRST DATA SET
+         DC    AL1(EXLLASTE+EXLARL)   ENTRY CODE TO RETRIEVE
+*                                     AND INDICATE LAST ENTRY IN LIST
 *                                     ALLOCATION INFORMATION
          DC    AL3(0)                 ADDR OF ALLOCATION RETRIEVAL LIST
-         DC    AL1(EXLLASTE+EXLRJFCB) ENTRY CODE TO RETRIEVE FIRST JFCB
-*                                     AND INDICATE LAST ENTRY IN LIST
-         DC    AL3(0)                 ADDR OF JFCB FOR FIRST DATA SET
 EXLSTLEN EQU *-CONST_EXLST
 *
 *  AN ALLOCATION RETRIEVAL LIST FOLLOWS, POINTED TO BY DCB EXIT LIST.
@@ -241,10 +240,11 @@ WALEN       EQU  *-SAVEA
 WDCBAREA DSECT
 WDCB        DS  CL(WDCBLEN)
 
+         DS    0D
 JFCB_DCB DSECT
          DS    CL(JFCB_DCBLEN)
 
-         DCBD  DSORG=PO
+         DCBD  
 
 JFCB     DS     CL176' '         FIRST JFCB
 JFCBLEN  EQU *-JFCB
