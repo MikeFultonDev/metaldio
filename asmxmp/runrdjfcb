@@ -16,4 +16,4 @@ fi
 
 xmplib="$(hlq).ASMXMP.LOAD"
 echo "Output in ${out}"
-mvscmd --steplib=$xmplib --indd="${rdlib}" --pgm=RDJFCB --outdd="${out}"
+mvscmd --steplib=$xmplib --indd="${rdlib}:SYS1.MACLIB" --pgm=RDJFCB --outdd="${out}"
