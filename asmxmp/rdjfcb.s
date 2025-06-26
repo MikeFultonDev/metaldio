@@ -71,20 +71,18 @@ WOPEN_SUCCESS DS 0H
 *
          LA    R1,ARL_LEN
          BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
-         MVC   0(ARL_LEN,R1),CONST_ARLLIST
+         LR    R8,R1
+         USING ARL_LIST,R8
+         MVC   0(ARL_LEN,R8),CONST_ARLLIST
+
+*
+* Request USS Path names and Dataset names
+*
+         LA    R0,ARLUSS
+         ST    R0,ARLOPT1
 
 * Store ARL List pointer into Exit List
          STCM  R1,B'0111',EXIT_ARL_ADDR
-*
-* Get storage for First JFCB entry in R1 and clear it
-*
-*         LA    R1,JFCBLEN
-*         BRASL R14,STG_OBTAIN_24    Get 24-bit cleared heap storage
-*         MVI   0(R1),C' '
-*         MVC   1(JFCBLEN-1,R1),0(R1)   Set storage to blanks
-
-* Store JFCB entry pointer into Exit List
-*         STCM  R1,B'0111',EXIT_JFCB_ADDR
 
 *
 * Get storage for JFCB DCB and initialize it
@@ -101,7 +99,7 @@ WOPEN_SUCCESS DS 0H
 * Store IHADCB pointer into RDJFCB
          ST    R9,RDJFCBP
          MVI   RDJFCBP,X'80'           SET FLAG IN PARMLIST
-         
+
 *
 * Example to read PATH info from JFCB:                               *
 *   https://tech.mikefulton.ca/DDNameReadDSAndPathEntries            *
@@ -115,18 +113,67 @@ RDJFCBE  DS  0H
          RDJFCB MF=(E,RDJFCBP)
          LTR   R15,R15
          BZ    JFCB_OK
-*
-* Currently getting RC 4 from RDJFCB
-*  https://www.ibm.com/docs/en/zos/3.1.0?topic=rms-example
-*
+
+INERROR  DS 0H
          LHI R0,JFCB_FAIL_MASK
          LR  R6,R15                put err code in R6
          OR  R6,R0
          B   DONE            
 
-INERROR  DS 0H
-
 JFCB_OK  DS 0H
+
+PROCESS_JFCB   DS 0H
+         ICM   R1,X'F',ARLAREA  GET AND TEST ADDRESS OF ARL
+         BZ    DONE_NO_ARL      GO IF SYSTEM DOES NOT SUPPORT ARL
+         CLI   ARLRCODE,0       TEST RDJFCB REASON CODE
+         BNE   DONE_NO_INFO     BRANCH IF INFORMATION NOT AVAILABLE
+*
+*  Loop through the JFCBs.
+*  Print the Dataset name or Path name as appropriate to output
+*
+         LH    R5,ARLRTRVD         R5 has # of JFCB's retrieved
+         L     R2,ARLAREA          Set up R2 
+         USING ARA,R2              R2 points to ARA
+LOOP_ARA TM    ARAFLG,ARAXINF      Test if Extended Info
+         BZ    USE_DS              If none, branch to use dataset
+         SR    R3,R3               Clear R3
+         IC    R3,ARAXINOF         Get double-word offset
+         SLL   R3,3                Convert to byte offset
+         AR    R3,R2               Set up R3
+         USING ARAXINLN,R3         R3 points to Extended Info
+         SR    R4,R4               Clear R4
+         ICM   R4,B'0011',ARAPATHO Test if path available
+         BZ    USE_DS              If no path, use dataset
+         USING ARAPATHNAME,R4
+
+USE_PATH DS 0H
+* Write out path
+         LA  R1,ARAPATHLEN
+* msf - this 'path' is not being taken - it shows up as 'DS'
+         ST  R1,0
+         MVC OUTREC(PATHMSGLEN),PATHMSG
+         PUT WDCB,OUTREC
+         B     NEXT_ARA
+
+USE_DS   DS 0H
+* Write out dataset
+         LA    R4,ARAJFCB
+         USING JFCB,R4
+         MVC OUTREC(DSMSGLEN),DSMSG
+         PUT WDCB,OUTREC
+
+NEXT_ARA AH    R2,ARALEN        POINT TO NEXT ARA ENTRY
+         BCT   R5,LOOP_ARA      DECREMENT JFCB COUNTER, LOOP IF MORE
+         B     DONE_JFCB
+         
+DONE_NO_ARL DS 0H
+         LA R2,1
+         ST R1,0
+DONE_NO_INFO DS 0H
+         LA R2,2
+         ST R1,0
+DONE_JFCB DS   0H
+
 *
 * Write result to OUTDD
 *
@@ -211,8 +258,20 @@ WCLOSELEN  EQU   *-CONST_WCLOSE
 OUTMSG     DS 0H
 OUTMSG_LEN  DC H'06'
 OUTMSG_SPAN DC H'00'
-OUTMSG_TXT  DC C'Hi'
+OUTMSG_TXT  DC C'xx'
 OUTMSGLEN EQU *-OUTMSG
+
+PATHMSG     DS 0H
+PATHMSG_LEN  DC H'06'
+PATHMSG_SPAN DC H'00'
+PATHMSG_TXT  DC C'Pa'
+PATHMSGLEN EQU *-PATHMSG
+
+DSMSG     DS 0H
+DSMSG_LEN  DC H'06'
+DSMSG_SPAN DC H'00'
+DSMSG_TXT  DC C'Ds'
+DSMSGLEN EQU *-DSMSG
 
 CONST_JFCB_DCB DCB MACRF=E,DDNAME=INDD,EXLST=(0)              
 JFCB_DCBLEN    EQU   *-CONST_JFCB_DCB
@@ -228,7 +287,7 @@ EXLSTLEN EQU *-CONST_EXLST
 *
 *  AN ALLOCATION RETRIEVAL LIST FOLLOWS, POINTED TO BY DCB EXIT LIST.
 *
-CONST_ARLLIST  IHAARL DSECT=NO,PREFIX=ARL
+CONST_ARLLIST  IHAARL DSECT=NO,PREFIX=CAR
 ARL_LEN  EQU *-CONST_ARLLIST
          LTORG ,
 
@@ -242,7 +301,7 @@ WCLOSE_PARMS DS CL(WCLOSELEN)
 OUTREC       DS CL(2048+4)
 RDJFCBP      DS A
 WALEN       EQU  *-SAVEA
-
+ 
 WDCBAREA DSECT
 WDCB        DS  CL(WDCBLEN)
 
@@ -250,10 +309,12 @@ WDCB        DS  CL(WDCBLEN)
 JFCB_DCB DSECT
          DS    CL(JFCB_DCBLEN)
 
-         DCBD  
+         DCBD
 
-JFCB     DS     CL176' '         FIRST JFCB
-JFCBLEN  EQU *-JFCB
+ARL_LIST  IHAARL DSECT=YES,PREFIX=ARL
+
+JFCB     DSECT
+         IEFJFCBN LIST=YES
 
          IHAARA ,
          IHAEXLST ,             DCB exit list mapping
