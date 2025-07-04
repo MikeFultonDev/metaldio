@@ -78,11 +78,11 @@ WOPEN_SUCCESS DS 0H
 *
 * Request USS Path names and Dataset names
 *
-         LA    R0,ARLUSS
-         ST    R0,ARLOPT1
+         LA    R0,ARLUSS+ARLLANY
+         STC   R0,ARLOPT1
 
 * Store ARL List pointer into Exit List
-         STCM  R1,B'0111',EXIT_ARL_ADDR
+         STCM  R8,B'0111',EXIT_ARL_ADDR
 
 *
 * Get storage for JFCB DCB and initialize it
@@ -149,8 +149,6 @@ LOOP_ARA TM    ARAFLG,ARAXINF      Test if Extended Info
 USE_PATH DS 0H
 * Write out path
          LA  R1,ARAPATHLEN
-* msf - this 'path' is not being taken - it shows up as 'DS'
-         ST  R1,0
          MVC OUTREC(PATHMSGLEN),PATHMSG
          PUT WDCB,OUTREC
          B     NEXT_ARA
