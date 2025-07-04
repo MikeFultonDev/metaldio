@@ -15,6 +15,7 @@ if [ "${mem}" != "NEWMEM" ]; then
 fi
 
 xmplib="$(hlq).ASMXMP.LOAD"
-echo "Output in ${out}"
-mvscmd --steplib=$xmplib --indd="${rdlib}:SYS1.MACLIB:/u/mfulton:${rdlib}" --pgm=RDJFCB --outdd="${out}"
-dcat "${out}"
+mvscmd --steplib=$xmplib --indd="SYS1.MACLIB:$HOME:${rdlib}" --pgm=RDJFCB --outdd="${out}"
+
+echo "List of entries in INDD concatenation (see ${out})"
+cat "//'${out}'"

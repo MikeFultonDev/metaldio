@@ -1,3 +1,13 @@
+*
+* This program takes as input:
+* -the DDName INDD:
+*    which specifies a concatenation of paths and datasets
+* -the DDName OUTDD:
+*    which specifies a variable sequential dataset to write
+*    the entries to.
+*
+* For an example, see: runrdjfcb
+*
          START , 
          YREGS ,                  register equates, syslib SYS1.MACLIB 
          IGWDES                   DSECTs for DESERV
@@ -123,10 +133,10 @@ INERROR  DS 0H
 JFCB_OK  DS 0H
 
 PROCESS_JFCB   DS 0H
-         ICM   R1,X'F',ARLAREA  GET AND TEST ADDRESS OF ARL
-         BZ    DONE_NO_ARL      GO IF SYSTEM DOES NOT SUPPORT ARL
-         CLI   ARLRCODE,0       TEST RDJFCB REASON CODE
-         BNE   DONE_NO_INFO     BRANCH IF INFORMATION NOT AVAILABLE
+         ICM   R1,X'F',ARLAREA      Get/Test address of ARL
+         BZ    DONE_NO_ARL          Done if system doesn't support
+         CLI   ARLRCODE,0           Check reason code
+         BNE   DONE_NO_INFO         Branch if info unavailable
 *
 *  Loop through the JFCBs.
 *  Print the Dataset name or Path name as appropriate to output
@@ -147,33 +157,33 @@ LOOP_ARA TM    ARAFLG,ARAXINF      Test if Extended Info
 
 USE_PATH DS 0H
 * Write out path
-         USING ARAPATHNAME,R6
          AR    R6,R3
-         LH    R1,ARAPATHLEN
-         LR    R0,R1
-         AHI   R0,4
-         STH   R0,VARMSG_LEN
-         SR    R0,R0
-         STH   R0,VARMSG_SPAN
-         EX    R1,VAR_PATH_MVC
-         PUT   WDCB,OUTREC
-         B     NEXT_ARA
+         USING ARAPATHNAME,R6     R6 points to the pathname DSECT
+         LH    R1,ARAPATHLEN      R1 has the length of the pathname
+         LR    R0,R1              Copy length into R0
+         AHI   R0,4               Add 4 to the length for the msg hdr
+         STH   R0,VARMSG_LEN      Store the msg hdr into the OUTREC
+         SR    R0,R0              Clear R0
+         STH   R0,VARMSG_SPAN     and store R0 (0) into the 'span'
+         EX    R1,VAR_PATH_MVC    Do var-length MVC using R1 as length
+         PUT   WDCB,OUTREC        Issue PUT of path to OUTDD ddname
+         B     NEXT_ARA           Branch to next ARA entry
 
 USE_DS   DS 0H
 * Write out dataset
-         LA    R4,ARAJFCB
-         USING JFCB,R4
-         LA    R1,44
-         LR    R0,R1
-         AHI   R0,4
-         STH   R0,VARMSG_LEN
-         SR    R0,R0
-         STH   R0,VARMSG_SPAN
-         EX    R1,VAR_DSNAME_MVC
-         PUT   WDCB,OUTREC
+         LA    R4,ARAJFCB         R4 points to the JFCB DSECT
+         USING JFCB,R4 
+         LA    R1,44              R1 has length of the ds inc blanks
+         LR    R0,R1              Copy length into R0
+         AHI   R0,4               Add 4 to the length for the msg hdr
+         STH   R0,VARMSG_LEN      Store the msg hdr into the OUTREC
+         SR    R0,R0              Clear R0
+         STH   R0,VARMSG_SPAN     and store R0 (0) into the 'span'
+         EX    R1,VAR_DSNAME_MVC  Do var-length MVC using R1 as length
+         PUT   WDCB,OUTREC        Issue PUT of dataset to OUTDD ddname
 
-NEXT_ARA AH    R2,ARALEN        POINT TO NEXT ARA ENTRY
-         BCT   R5,LOOP_ARA      DECREMENT JFCB COUNTER, LOOP IF MORE
+NEXT_ARA AH    R2,ARALEN          Point to next ARA entry
+         BCT   R5,LOOP_ARA        Decrement JFCB entry, loop if more
          B     DONE_JFCB
 
 DONE_NO_ARL DS 0H
@@ -183,14 +193,6 @@ DONE_NO_INFO DS 0H
          LA R2,2
          ST R1,0
 DONE_JFCB DS   0H
-
-*
-* Write result to OUTDD
-*
-WRITE_RESULT DS 0H
-         MVC OUTREC(OUTMSGLEN),OUTMSG
-         PUT WDCB,OUTREC      
-
 *
 WCLOSE  DS 0H
          MVC WCLOSE_PARMS(WCLOSELEN),CONST_WCLOSE
@@ -265,35 +267,16 @@ WOPENLEN   EQU   *-CONST_WOPEN
 CONST_WCLOSE CLOSE (*-*),MODE=31,MF=L
 WCLOSELEN  EQU   *-CONST_WCLOSE
 
-OUTMSG     DS 0H
-OUTMSG_LEN  DC H'06'
-OUTMSG_SPAN DC H'00'
-OUTMSG_TXT  DC C'xx'
-OUTMSGLEN EQU *-OUTMSG
-
-PATHMSG     DS 0H
-PATHMSG_LEN  DC H'06'
-PATHMSG_SPAN DC H'00'
-PATHMSG_TXT  DC C'Pa'
-PATHMSGLEN EQU *-PATHMSG
-
-DSMSG     DS 0H
-DSMSG_LEN  DC H'06'
-DSMSG_SPAN DC H'00'
-DSMSG_TXT  DC C'Ds'
-DSMSGLEN EQU *-DSMSG
-
 CONST_JFCB_DCB DCB MACRF=E,DDNAME=INDD,EXLST=(0)              
 JFCB_DCBLEN    EQU   *-CONST_JFCB_DCB
 
 CONST_EXLST DC 0F'0'
-         DC    AL1(EXLLASTE+EXLARL)   ENTRY CODE TO RETRIEVE
-*                                     AND INDICATE LAST ENTRY IN LIST
-*                                     ALLOCATION INFORMATION
-         DC    AL3(0)                 ADDR OF ALLOCATION RETRIEVAL LIST
+         DC    AL1(EXLLASTE+EXLARL)   Entry code to retrieve
+*                                     and indicate last entry in list
+         DC    AL3(0)                 Addr of allocation retrieval list
 EXLSTLEN EQU *-CONST_EXLST
 *
-*  AN ALLOCATION RETRIEVAL LIST FOLLOWS, POINTED TO BY DCB EXIT LIST.
+* An allocation retrieval list follows, pointed to by DCB exit list
 *
 CONST_ARLLIST  IHAARL DSECT=NO,PREFIX=CAR
 ARL_LEN  EQU *-CONST_ARLLIST
@@ -348,7 +331,7 @@ EXIT_EC_JFCB   DS AL1
 EXIT_JFCB_ADDR DS AL3
 
 *------------------------------------------------------------------- 
-* Equates                                                            - 
+* Equates                                                          - 
 *------------------------------------------------------------------- 
 JFCB_FAIL_MASK EQU    16
 RDJFCB_FAIL_MASK EQU  32
