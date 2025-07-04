@@ -141,29 +141,41 @@ LOOP_ARA TM    ARAFLG,ARAXINF      Test if Extended Info
          SLL   R3,3                Convert to byte offset
          AR    R3,R2               Set up R3
          USING ARAXINLN,R3         R3 points to Extended Info
-         SR    R4,R4               Clear R4
-         ICM   R4,B'0011',ARAPATHO Test if path available
+         SR    R6,R6               Clear R6
+         ICM   R6,B'0011',ARAPATHO Test if path available
          BZ    USE_DS              If no path, use dataset
-         USING ARAPATHNAME,R4
 
 USE_PATH DS 0H
 * Write out path
-         LA  R1,ARAPATHLEN
-         MVC OUTREC(PATHMSGLEN),PATHMSG
-         PUT WDCB,OUTREC
+         USING ARAPATHNAME,R6
+         AR    R6,R3
+         LH    R1,ARAPATHLEN
+         LR    R0,R1
+         AHI   R0,4
+         STH   R0,VARMSG_LEN
+         SR    R0,R0
+         STH   R0,VARMSG_SPAN
+         EX    R1,VAR_PATH_MVC
+         PUT   WDCB,OUTREC
          B     NEXT_ARA
 
 USE_DS   DS 0H
 * Write out dataset
          LA    R4,ARAJFCB
          USING JFCB,R4
-         MVC OUTREC(DSMSGLEN),DSMSG
-         PUT WDCB,OUTREC
+         LA    R1,44
+         LR    R0,R1
+         AHI   R0,4
+         STH   R0,VARMSG_LEN
+         SR    R0,R0
+         STH   R0,VARMSG_SPAN
+         EX    R1,VAR_DSNAME_MVC
+         PUT   WDCB,OUTREC
 
 NEXT_ARA AH    R2,ARALEN        POINT TO NEXT ARA ENTRY
          BCT   R5,LOOP_ARA      DECREMENT JFCB COUNTER, LOOP IF MORE
          B     DONE_JFCB
-         
+
 DONE_NO_ARL DS 0H
          LA R2,1
          ST R1,0
@@ -275,8 +287,6 @@ CONST_JFCB_DCB DCB MACRF=E,DDNAME=INDD,EXLST=(0)
 JFCB_DCBLEN    EQU   *-CONST_JFCB_DCB
 
 CONST_EXLST DC 0F'0'
-*         DC    AL1(EXLRJFCB)          ENTRY CODE FOR FIRST JFCB
-*         DC    AL3(0)                 ADDR OF JFCB FOR FIRST DATA SET
          DC    AL1(EXLLASTE+EXLARL)   ENTRY CODE TO RETRIEVE
 *                                     AND INDICATE LAST ENTRY IN LIST
 *                                     ALLOCATION INFORMATION
@@ -287,6 +297,13 @@ EXLSTLEN EQU *-CONST_EXLST
 *
 CONST_ARLLIST  IHAARL DSECT=NO,PREFIX=CAR
 ARL_LEN  EQU *-CONST_ARLLIST
+
+*
+* MVC Variable Length instructions for Path and DSName copies
+*
+VAR_PATH_MVC   MVC VARMSG_TXT(0),ARAPATHNAM
+VAR_DSNAME_MVC MVC VARMSG_TXT(0),JFCBDSNM
+
          LTORG ,
 
 *------------------------------------------------------------------- 
@@ -296,7 +313,14 @@ WAREA       DSECT
 SAVEA       DS    18F 
 WOPEN_PARMS  DS CL(WOPENLEN)
 WCLOSE_PARMS DS CL(WCLOSELEN)
-OUTREC       DS CL(2048+4)
+
+               DS 0F
+OUTREC         DS CL(2048+4)
+VARMSG         ORG OUTREC
+VARMSG_LEN     DS HL2
+VARMSG_SPAN    DS HL2
+VARMSG_TXT     DS CL2048
+
 RDJFCBP      DS A
 WALEN       EQU  *-SAVEA
  
