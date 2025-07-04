@@ -1,0 +1,2 @@
+#!/bin/env bash
+xlc -Wc,GONUM,LIST\(./\) -odisasm disasm.c

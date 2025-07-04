@@ -36,6 +36,7 @@ basicalloc
 basiccreate
 basicenq
 crtmem
+disasm
 
 readperf
 

@@ -1,0 +1,14 @@
+
+ASMADOP hand-disassembly:
+        A7F4000C : BRC 'F' 12 (12 halfwords, so 24 bytes)
+        90ECD00C : STM R14,R12,12(R13)
+        A7B50004 : BRAS R11,4 (4 halfwords, so 8 bytes)
+        58BB0000 : L R11,0(,11)       R11 address in code
+        0DA0     : BASR R10,R0        R10 addressability
+        41F00000 : LA R15,0
+        5800B008 : L R0,8(,11)
+        58101018 : L R1,x18(R1)
+        18C1     : LR R12,R1
+        98F1D010 : LM R15,R1,0x10(R13) Reload R15,R0,R1 
+        D21BC0001000 : MVC xC00(2,R11),0(1)
+        9200C004 : MVI 4(R12),0 <-- protection exception

@@ -8,9 +8,12 @@ if [ $# -lt 1 ]; then
 fi
 pgm=$1
 
+DBG_DS="$(hlq).DEBUG.SLD"
+ADA_DS="$(hlq).DEBUG.ADA"
+MEM_DBG="${DBG_DS}(${pgm})"
+MEM_ADA="${ADA_DS}(${pgm})"
+
 xmplib="$(hlq).ASMXMP.LOAD"
-xmpadata="$(hlq).ASMXMP.${pgm}.SYSADATA"
-xmplangx="$(hlq).ASMXMP.${pgm}.ASMLANGX"
 
 dls "${xmplib}" >/dev/null 2>/dev/null
 if [ $? -gt 0 ]; then
@@ -21,19 +24,8 @@ else
   set -e
 fi
 
-drm -f ${xmplangx}
-dtouch -tSEQ -rvb -l1562 ${xmplangx}
-drm -f ${xmpadata}
-dtouch -tSEQ -rvb -l1562 ${xmpadata}
-
-as --LIST,SUPRWARN\(425,434\) "--gadata=//'${xmpadata}'" ${pgm}.s >${pgm}.lst
-
-set +e
-mvscmd --pgm=ASMLANGX --args=${pgm} --sysadata="${xmpadata}" --asmlangx="${xmplangx},old" --sysprint=*
-if [ $? -gt 0 ]; then
-  echo "ASMLANGX not available on this system - ASMLANGX generation skipped."
-fi
-set -e
+as --LIST,SUPRWARN\(425,434\) "--gadata=//'${MEM_ADA}'" ${pgm}.s >${pgm}.lst
+mvscmd --pgm=XSLDMOD --steplib=$SLDLOAD --args='DDNAME (ASM' --sysadata="${MEM_ADA}" --sldlogic="$MEM_DBG" --sysprint=* --systerm=*
 
 ld -o"//'${xmplib}(${pgm})'" ${pgm}.o
 
