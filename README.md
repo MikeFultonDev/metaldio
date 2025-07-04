@@ -47,23 +47,24 @@ If you want to see how things are implemented, and perhaps provide some new func
 
 ### I/O SVCs
 
-- [SVC 99](https://www.ibm.com/docs/en/zos/latest?topic=functions-example-dynamic-allocation-request): Dynamic Allocation of DCB
+- [SVC 99](https://tech.mikefulton.ca/SVC99-Example): Dynamic Allocation of DCB [Example](https://tech.mikefulton.ca/SVC99)
+- [SVC 18](https://tech.mikefulton.ca/SVC18-BLDL): BLDL macro or FIND macro
 - [SVC 19](https://tech.mikefulton.ca/SVC19-OPEN): Open a DCB
+- [SVC 20](https://tech.mikefulton.ca/SVC20-CLOSE): Close a DCB
 - [SVC 21](https://tech.mikefulton.ca/SVC21): STOW (update directory entry for member)
-- [SVC 20](https://tech.mikefulton.ca/SVC20-CLOSE): Close a DCB.
 
 ### I/O Macros
 
-- [DCBD Macro](https://www.ibm.com/docs/en/zos/latest?topic=nvmd-dcbdprovide-symbolic-reference-data-control-blocks-bdam-bisam-bpam-bsam-qisam-qsam): Data Control Block symbolic names.
+- [DCBD Macro](https://tech.mikefulton.ca/DCBD-Macro): Data Control Block symbolic names
 - [DCB BPAM Macro](https://tech.mikefulton.ca/DCBBPAMMacro): DCB Macro for BPAM usage
 - [Dynalloc Macro](https://tech.mikefulton.ca/DynallocMacro): Dynamic Allocation of DCB
-- [OPEN](https://www.ibm.com/docs/en/zos/latest?topic=nvmd-openconnect-program-data-bdam-bisam-interface-vsam-bpam-bsam-qisam-interface-vsam-qsam) [Macro](https://tech.mikefulton.ca/QSAMOPEN),
-  - [Macro](https://tech.mikefulton.ca/DynallocMacro): DYNALLOC aka SVC99.
-- [BLDL](https://www.ibm.com/docs/en/zos/latest?topic=pdse-using-bldl-macro-construct-directory-entry-list) Macro: Read one or more directory entries into virtual storage.
-- [FIND](https://www.ibm.com/docs/en/zos/latest?topic=descriptions-findestablish-beginning-data-set-member-bpam) Macro: Establish the beginning of a data set member using a BLDL list or directory.
-- [DESERV](https://www.ibm.com/docs/en/zos/latest?topic=pdse-using-directory-entry-services) [Macro](https://tech.mikefulton.ca/DESERV): Directory Entry Services for PDS and PDSE data sets.
+  - [Macro](https://tech.mikefulton.ca/DynallocMacro): DYNALLOC aka SVC99
+- [OPEN Macro](https://tech.mikefulton.ca/QSAMOPEN)
+- [BLDL](https://tech.mikefulton.ca/BLDL-doc): Read one or more directory entries into virtual storage [Macro](https://tech.mikefulton.ca/BLDL-macro)
+- [FIND](https://tech.mikefulton.ca/FINDMacro): Establish the beginning of a data set member using a BLDL list or directory
+- [DESERV](https://tech.mikefulton.ca/DESERV): Directory Entry Services for PDS and PDSE data sets.
   - [DESERV Parameters](https://tech.mikefulton.ca/DESERV_GET)
-  - [DESERV DFSMS Information](https://www.ibm.com/docs/en/zos/latest?topic=smde-funcget-all)
+  - [DESERV DFSMS Information](https://tech.mikefulton.ca/DESERV_GET_ALL)
 - [SMDE Macro](https://tech.mikefulton.ca/SMDEMacro): Directory Entry information returned from DESERV GET.
 - [ISITMGD](https://www.ibm.com/docs/en/zos/latest?topic=pmp-using-isitmgd-determine-whether-data-set-is-system-managed) Macro: Determine if data set is SMS managed and info about a PDSE.
 - [NOTE](https://www.ibm.com/docs/en/zos/latest?topic=pdse-using-note-macro-provide-relative-position) [Macro](https://tech.mikefulton.ca/NOTEMacro): Return the TTRz that can subsequently be used by POINT.
