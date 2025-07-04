@@ -7,6 +7,8 @@ void init_opts(MLSX_Opts* opts)
   opts->help = 0;
   opts->dbg.verbose = 0;
   opts->dbg.debug = 0;
+  opts->dbg.error_buffer = 0;
+  opts->dbg.info_buffer = 0;
   opts->longform  = 0;
   opts->alias  = 0;
   opts->ccsid  = 0;

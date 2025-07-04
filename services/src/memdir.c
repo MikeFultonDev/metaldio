@@ -194,7 +194,7 @@ static struct mstat* copy_ispf_stats_into_mstat(const char* userdata, int userda
 static struct mstat* smde_to_mstat(const struct smde* PTR32 smde, struct mstat* mstat, const DBG_Opts* opts)
 {
   if (!mstat) {
-    fprintf(stderr, "NULL mstat passed to smde_to_mstat.\n");
+    errmsg(opts, "NULL mstat passed to smde_to_mstat.\n");
     return NULL;
   }
 
@@ -206,14 +206,14 @@ static struct mstat* smde_to_mstat(const struct smde* PTR32 smde, struct mstat* 
   mstat->mem_id = mem_id;
 
   if (!desp_copy_name_and_alias(mstat, smde)) {
-    fprintf(stderr, "Unable to copy name and alias to mstat.\n");
+    errmsg(opts, "Unable to copy name and alias to mstat.\n");
     return NULL;
   }
   if (smde->smde_ext_attr_off != 0) { /* Extended attributes available */
     struct smde_ext_attr* PTR32 ext_attr = (struct smde_ext_attr*) (((char*) smde) + smde->smde_ext_attr_off);
     mstat = copy_extended_attributes_into_mstat(ext_attr, mstat);
     if (!mstat) {
-      fprintf(stderr, "Unable to copy extended attributes to mstat.\n");
+      errmsg(opts, "Unable to copy extended attributes to mstat.\n");
       return NULL;
     }
     debug(opts, "Extended attribute offset information copied.\n");
@@ -226,7 +226,7 @@ static struct mstat* smde_to_mstat(const struct smde* PTR32 smde, struct mstat* 
     int userdata_len = smde->smde_usrd_len.smde_pmar_len;
     mstat = copy_ispf_stats_into_mstat(userdata, userdata_len, mstat, opts);
     if (!mstat) {
-      fprintf(stderr, "Unable to copy ISPF Stats to mstat.\n");
+      errmsg(opts, "Unable to copy ISPF Stats to mstat.\n");
       return NULL;
     }
     debug(opts, "User data offset information copied.\n");    
@@ -546,14 +546,14 @@ int readmemdir_entry(FM_BPAMHandle* bh, const char* mem, struct mstat* mstat, co
     
   desp = find_desp(bh, mem, opts);
   if (!desp) {
-    fprintf(stderr, "Unable to find member %s.\n", mem);
+    errmsg(opts, "Unable to find member %s.\n", mem);
     return 4;
   }
 
   smde = (struct smde* PTR32) (desp->desp_area_ptr->desb_data);
 
   if (!smde_to_mstat(smde, mstat, opts)) {
-    fprintf(stderr, "Unable to copy statistics from smde for %s.\n", mem);
+    errmsg(opts, "Unable to copy statistics from smde for %s.\n", mem);
     return 4;
   }
 

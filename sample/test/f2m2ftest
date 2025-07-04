@@ -25,7 +25,7 @@ mkdir "${m2ftmpdirl}"
 
 cp -rpf src "${f2mtmpdir}"
 cp -rpf include "${f2mtmpdir}"
-cp -rpf obj "${f2mtmpdir}"
+cp -rpf bin "${f2mtmpdir}"
 
 dtouch "${hlq}.${mlq}.c"
 dtouch "${hlq}.${mlq}.h"
@@ -34,17 +34,18 @@ dtouch "${hlq}.${mlq}.o"
 dtouch "${hlq}.${mlq}.a"
 dtouch "${hlq}.${mlq}.s"
 dtouch -l 137 -r vba "${hlq}.${mlq}.lst"
+dtouch -l 137 -r vba "${hlq}.${mlq}.llst"
 
 time bin/f2m "${f2mtmpdir}/src" "${hlq}.${mlq}" '*.*'
 time bin/f2m "${f2mtmpdir}/include" "${hlq}.${mlq}" '*.*'
-time bin/f2m "${f2mtmpdir}/obj" "${hlq}.${mlq}" '*.*'
+time bin/f2m "${f2mtmpdir}/bin" "${hlq}.${mlq}" '*.*'
 
 #
 # run again with all members already existing
 #
 time bin/f2m "${f2mtmpdir}/src" "${hlq}.${mlq}" '*.*'
 time bin/f2m "${f2mtmpdir}/include" "${hlq}.${mlq}" '*.*'
-time bin/f2m "${f2mtmpdir}/obj" "${hlq}.${mlq}" '*.*'
+time bin/f2m "${f2mtmpdir}/bin" "${hlq}.${mlq}" '*.*'
 
 #
 # Copy the files into a temp directory
@@ -52,4 +53,3 @@ time bin/f2m "${f2mtmpdir}/obj" "${hlq}.${mlq}" '*.*'
 
 time bin/m2f -i "${hlq}.${mlq}.c" "${m2ftmpdirc}" '*'
 time bin/m2f -i "${hlq}.${mlq}.lst" "${m2ftmpdirl}" '*'
-
