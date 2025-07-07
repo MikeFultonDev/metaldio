@@ -3,7 +3,7 @@ SRCDIR=core/src
 BLDDIR=core/obj
 DEPDIR=core/src/deps
 ARDIR=core/lib
-archive=bpamiocore.a
+archive=libbpamiocore.a
 
 csource := $(shell find $(SRCDIR) -type f -name *.c)
 asource := $(shell find $(SRCDIR) -type f -name *.s)

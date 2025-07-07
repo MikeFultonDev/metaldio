@@ -2,8 +2,8 @@ SRCDIR=sample/src
 DEPDIR=sample/src/deps
 BLDDIR=sample/obj
 BINDIR=sample/bin
-corear=core/lib/bpamiocore.a
-svcsar=services/lib/bpamiosvcs.a
+corear=core/lib/libbpamiocore.a
+svcsar=services/lib/libbpamiosvcs.a
 
 csource := $(shell find $(SRCDIR) -type f -name *.c)
 cobjs   := $(patsubst $(SRCDIR)/%,$(BLDDIR)/%,$(csource:.c=.o))
