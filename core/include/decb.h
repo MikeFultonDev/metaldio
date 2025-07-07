@@ -1,7 +1,7 @@
 #ifndef __DECB__
 #define __DECB__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #pragma pack(1)
 struct decb {

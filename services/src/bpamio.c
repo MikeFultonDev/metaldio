@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <sys/ps.h>
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #include "util.h"
 #include "dio.h"

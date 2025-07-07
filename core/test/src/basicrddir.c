@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "asmdio.h"
+#include "metaldio.h"
 #include "dio.h"
 #include "mem.h"
 #include "ihadcb.h"

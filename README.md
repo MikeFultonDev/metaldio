@@ -1,4 +1,4 @@
-# asmdio
+# metaldio
 
 Metal I/O: C Dataset I/O that directly calls low-level I/O macros
 

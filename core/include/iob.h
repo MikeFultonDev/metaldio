@@ -1,7 +1,7 @@
 #ifndef __IOB__
 #define __IOB__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #pragma pack(1)
 struct iob {

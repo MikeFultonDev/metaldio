@@ -1,7 +1,7 @@
 #ifndef __S99X__
 #define __S99X__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -1,7 +1,7 @@
 #ifndef __DIO_H__
 #define __DIO_H__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #include "closecb.h"
 #include "decb.h"
