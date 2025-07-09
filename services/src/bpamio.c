@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <sys/ps.h>
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #include "util.h"
 #include "dio.h"
@@ -1019,4 +1019,20 @@ int deq_dataset_member(const char* ds, const char* wmem, const DBG_Opts* opts)
   free(rname);
   free(qname);
   return rc;
+}
+
+record_format_t record_format(const FM_BPAMHandle* bh, const DBG_Opts* opts)
+{
+  if ((bh->dcb->dcbexlst.dcbrecfm & dcbrecf) && (bh->dcb->dcbexlst.dcbrecfm & dcbrecbr)) {
+    return RECORD_FORMAT_FB;
+  } else if (bh->dcb->dcbexlst.dcbrecfm & dcbrecf) {
+    return RECORD_FORMAT_F;
+  } else if ((bh->dcb->dcbexlst.dcbrecfm & dcbrecv) && (bh->dcb->dcbexlst.dcbrecfm & dcbrecbr)) {
+    return RECORD_FORMAT_VB;
+  } else if (bh->dcb->dcbexlst.dcbrecfm & dcbrecv) {
+    return RECORD_FORMAT_V;
+  } else if (bh->dcb->dcbexlst.dcbrecfm & dcbrecu) {
+    return RECORD_FORMAT_U;
+  }
+  return RECORD_FORMAT_UNKNOWN;
 }

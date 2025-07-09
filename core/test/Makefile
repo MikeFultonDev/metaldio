@@ -3,7 +3,7 @@ DEPDIR=src/deps
 BLDDIR=obj
 ARDIR=../lib
 BINDIR=bin
-archive=bpamiocore.a
+archive=libbpamiocore.a
 
 csource := $(shell find $(SRCDIR) -type f -name *.c)
 cobjs   := $(patsubst $(SRCDIR)/%,$(BLDDIR)/%,$(csource:.c=.o))

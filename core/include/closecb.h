@@ -1,7 +1,7 @@
 #ifndef __CLOSECB__
 #define __CLOSECB__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #pragma pack(1)
 struct closecb {

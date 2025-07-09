@@ -63,7 +63,7 @@
     "stdlib.h": "c",
     "stat.h": "c",
     "ps.h": "c",
-    "asmdiocommon.h": "c",
+    "metaldiocommon.h": "c",
     "dio.h": "c",
     "wrappers.h": "c",
     "util.h": "c",

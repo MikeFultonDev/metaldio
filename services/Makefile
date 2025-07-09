@@ -2,7 +2,7 @@ SRCDIR=services/src
 DEPDIR=services/src/deps
 BLDDIR=services/obj
 ARDIR=services/lib
-archive=bpamiosvcs.a
+archive=libbpamiosvcs.a
 
 csource := $(shell find $(SRCDIR) -type f -name *.c)
 cobjs   := $(patsubst $(SRCDIR)/%,$(BLDDIR)/%,$(csource:.c=.o))

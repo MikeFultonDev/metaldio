@@ -2,7 +2,7 @@
 #define __MEM_H__ 1
 
   #include <stdio.h>
-  #include "asmdio.h"
+  #include "metaldio.h"
 
   void* PTR32 MALLOC24(unsigned int len);
   int FREE24(void* PTR32 addr, unsigned int len);

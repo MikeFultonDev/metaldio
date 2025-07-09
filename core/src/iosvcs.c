@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "asmdio.h"
+#include "metaldio.h"
 #include "dio.h"
 #include "mem.h"
 #include "ihadcb.h"

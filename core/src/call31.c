@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "asmdio.h"
+#include "metaldio.h"
 #include "wrappers.h"
 
 #if AMODE == 64

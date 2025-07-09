@@ -1,7 +1,7 @@
 #ifndef __IHADCB__
 #define __IHADCB__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #include <stdio.h>
 #include "dcbe.h"

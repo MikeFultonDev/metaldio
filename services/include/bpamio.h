@@ -108,5 +108,20 @@
    * Returns 0 if successful, non-zero otherwise
    */
   int deq_dataset_member(const char* dataset, const char* member, const DBG_Opts* opts);
+
+  typedef enum {
+    RECORD_FORMAT_F,
+    RECORD_FORMAT_FB,
+    RECORD_FORMAT_V,
+    RECORD_FORMAT_VB,
+    RECORD_FORMAT_U,
+    RECORD_FORMAT_UNKNOWN
+  } record_format_t;
+
+  /*
+   * record_format: Return the record format.
+   * Returns the record format as a record_format_t enum.
+   */
+  record_format_t record_format(const FM_BPAMHandle* bh, const DBG_Opts* opts);
     
 #endif

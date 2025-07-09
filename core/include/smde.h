@@ -1,7 +1,7 @@
 #ifndef __SMDE_H__
 #define __SMDE_H__ 1
 
-#include "asmdio.h"
+#include "metaldio.h"
 
 #pragma pack(1)
 
