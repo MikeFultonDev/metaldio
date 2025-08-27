@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
+#include <signal.h>
 #include "asmdio.h"
 #include "dio.h"
 #include "mem.h"
@@ -89,10 +91,28 @@ int SYEXDEQ(char* PTR32 qname, char* PTR32 rname, unsigned int rname_len)
   return SYEXDEQA(qname, rname, rname_len);
 }
 
+jmp_buf abend_jmp_buf;
+
+void abend_handler(int val)
+{
+  longjmp(abend_jmp_buf, 1);
+}
+
 int OPEN(struct opencb* PTR32 opencb)
 {
+  if (signal(SIGABND, abend_handler) == SIG_ERR) {
+    perror("Internal error - unable to set up abend handler");
+    return -2;
+  }
+  if (setjmp(abend_jmp_buf)) {
+    /*
+     * Signal handler returned control to me - mark OPEN as 'fail'
+     */
+    return -1;
+  }
   return OPENA(opencb);
 }
+
 int FIND(struct findcb* PTR32 findcb, struct ihadcb* PTR32 dcb)
 {
   return FINDA(findcb, dcb);
