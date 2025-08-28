@@ -65,7 +65,7 @@
 
   /*
    * write_record: Write a record of rec_len bytes in size from the buffer pointed to by rec.
-   * On success, returns the number of bytes written, which could be 0 for VB records of length 0.
+   * On success, returns 0 if successful, non-zero otherwise.
    * If a write error occurred, a negative value is returned.
    */
   ssize_t write_record(FM_BPAMHandle* bh, size_t rec_len, const char* rec, const DBG_Opts* opts);
