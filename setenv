@@ -25,7 +25,7 @@ export CC=xlc
 
 export CFLAGS="-Wc,OPT'(3)',${DATA_MODEL},${INFO}"
 #export CFLAGS="-Wc,debug,${DATA_MODEL},AGGR,${LIST},${INFO}"
-export CORE_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/core/intinclude -I${ASMDIOROOT}/core/include"
+export CORE_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/core/intinclude -I${ASMDIOROOT}/core/include -I${ASMDIOROOT}/services/include"
 export SERVICES_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/core/include -I${ASMDIOROOT}/services/include -I${ASMDIOROOT}/services/intinclude"
 export SAMPLE_CPPFLAGS="-DAMODE=${MODE} -I${ASMDIOROOT}/sample/include -I${ASMDIOROOT}/services/include"
 export LD=xlc

@@ -47,17 +47,17 @@ void FREE31(void* PTR32 addr)
   return free(addr);
 }
 
-void dumpstg(FILE* stream, void* p, size_t len)
+void dumpstg(const DBG_Opts* opts, void* p, size_t len)
 {
   char* buff = p;
   size_t i;
   for (i=0; i<len; ++i) {
     if ((i != 0) && (i % 16 == 0)) {
-      fprintf(stream, "\n");
+      errmsg(opts, "\n");
     }
     if (i % 4 == 0) {
-      fprintf(stream, " ");
+      errmsg(opts, " ");
     }
-    fprintf(stream, "%2.2X", buff[i]);
+    errmsg(opts, "%2.2X", buff[i]);
   }
 }

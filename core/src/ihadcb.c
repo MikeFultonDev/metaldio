@@ -71,8 +71,8 @@ void dcb_free(struct ihadcb* PTR32 dcb)
   FREE24(dcb, sizeof(struct ihadcb));
 }
 
-void dcb_fmt_dmp(FILE* stream, struct ihadcb* PTR32 dcb)
+void dcb_fmt_dmp(const DBG_Opts* opts, struct ihadcb* PTR32 dcb)
 {
-  dumpstg(stream, dcb, sizeof(struct ihadcb)); 
+  dumpstg(opts, dcb, sizeof(struct ihadcb)); 
 }
 
