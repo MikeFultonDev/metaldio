@@ -14,7 +14,7 @@
 
 static const struct s99_rbx s99rbxtemplate = {"S99RBX",S99RBXVR,{0,1,0,0,0,0,0},0,0,0};
 
-int dsdd_alloc(struct s99_common_text_unit* dsn, struct s99_common_text_unit* dd, struct s99_common_text_unit* disp)
+int dsdd_alloc(struct s99_common_text_unit* dsn, struct s99_common_text_unit* dd, struct s99_common_text_unit* disp, const DBG_Opts* opts)
 {
   struct s99rb* PTR32 parms;
   enum s99_verb verb = S99VRBAL;
@@ -31,9 +31,9 @@ int dsdd_alloc(struct s99_common_text_unit* dsn, struct s99_common_text_unit* dd
   rc = S99(parms);
   if (rc) {
 #ifdef DEBUG
-    s99_fmt_dmp(stderr, parms);
+    s99_fmt_dmp(opts, parms);
 #endif
-    s99_prt_msg(stderr, parms, rc);
+    s99_prt_msg(opts, parms, rc);
     return IOSVC_ERR_SVC99_ALLOC_FAILURE;
   }
 
@@ -73,11 +73,11 @@ int ddfree(struct s99_common_text_unit* dd)
   return 0;
 }
 
-int init_dsnam_text_unit(const char* dsname, struct s99_common_text_unit* dsn)
+int init_dsnam_text_unit(const char* dsname, struct s99_common_text_unit* dsn, const DBG_Opts* opts)
 {
   size_t dsname_len = (dsname == NULL) ? 0 : strlen(dsname);
   if (dsname == NULL || dsname_len == 0 || dsname_len > DS_MAX) {
-    fprintf(stderr, "Dataset Name <%.*s> is invalid\n", dsname_len, dsname);
+    errmsg(opts, "Dataset Name <%.*s> is invalid\n", dsname_len, dsname);
     return 8;
   }
 

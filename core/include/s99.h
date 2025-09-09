@@ -2,6 +2,7 @@
 #define __S99X__ 1
 
 #include "metaldio.h"
+#include "dbgopts.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -226,8 +227,8 @@ struct s99_em {
 
 struct s99rb* PTR32 s99_init(enum s99_verb verb, struct s99_flag1 flag1, struct s99_flag2 flag2, struct s99_rbx* rbxin, size_t num_text_units, ...);
 void s99_free(struct s99rb* PTR32 parms);
-int s99_prt_msg(FILE* stream, struct s99rb* PTR32 svc99parms, int svc99rc);
-void s99_fmt_dmp(FILE* stream, struct s99rb* PTR32 parms);
+int s99_prt_msg(const DBG_Opts* opts, struct s99rb* PTR32 svc99parms, int svc99rc);
+void s99_fmt_dmp(const DBG_Opts* opts, struct s99rb* PTR32 parms);
 
 int S99(struct s99rb* PTR32 parms);
 int S99MSG(struct s99_em* PTR32 parms);

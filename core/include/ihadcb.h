@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "dcbe.h"
+#include "dbgopts.h"
 
 #pragma pack(1)
 struct ihadcb {
@@ -397,7 +398,7 @@ struct ihadcb {
 
 struct ihadcb* PTR32 dcb_init(const char* ddname);
 void dcb_free(struct ihadcb* PTR32 dcb);
-void dcb_fmt_dmp(FILE* stream, struct ihadcb* PTR32 dcb);
+void dcb_fmt_dmp(const DBG_Opts* opts, struct ihadcb* PTR32 dcb);
 
 #define DCB_ADDR_UNSET   ((void*)(1))
 #define DCB_ADDR24_UNSET (1)
