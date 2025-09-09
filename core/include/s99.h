@@ -54,13 +54,13 @@ struct s99_flag2 {
 
 struct s99_unit_entry {
 	unsigned short s99tulng;
-	char s99tupar[0];
+	char s99tupar[1];
 };
 
 struct s99_basic_text_unit {
 	unsigned short s99tukey;
 	unsigned short s99tunum;
-	struct s99_unit_entry entry[0];
+	struct s99_unit_entry entry[1];
 };
 
 struct s99_common_text_unit {

@@ -342,7 +342,7 @@ struct iob {
       };
     struct {
       unsigned char  _filler38[72];
-      __extension__ double         iobchnpr[0]; /* -      CHANNEL PROGRAM USED TO TRANSFER DATA AS */
+      __extension__ double         iobchnpr[1]; /* -      CHANNEL PROGRAM USED TO TRANSFER DATA AS */
       };
     };
   };
