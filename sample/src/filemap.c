@@ -232,6 +232,11 @@ static int cmp_mem_file_pair(const void* l, const void* r)
 int check_for_duplicate_members(glob_t* globset, const FM_Table* table, const FM_Opts* opts)
 {
   FM_MemFilePair* mem_file_pair = calloc(globset->gl_pathc, sizeof(FM_MemFilePair));
+
+  if (!mem_file_pair) {
+    return 1;
+  }
+  
   char member_buffer[MEM_MAX+1];
   const char* member;
   int i;
@@ -259,5 +264,6 @@ int check_for_duplicate_members(glob_t* globset, const FM_Table* table, const FM
       rc = 1;
     }
   }
+  free(mem_file_pair);
   return rc;
 }
