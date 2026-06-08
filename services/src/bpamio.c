@@ -405,16 +405,25 @@ int flush(FM_BPAMHandle* bh, const DBG_Opts* opts)
 ssize_t write_record(FM_BPAMHandle* bh, size_t rec_len, const char* rec, const DBG_Opts* opts)
 {
   /*
-   * Batch up records until there is a full block and write it out 
+   * Batch up records until there is a full block and write it out
    */
   ssize_t rc;
-  if (can_add_record_to_block(bh, rec_len)) {
-    int truncated = copy_record_to_block(bh, rec_len, rec, opts);
-    bh->line_num++;
-    rc = 0;
-  } else {
+  
+  // If record doesn't fit in current block, write the block first
+  if (!can_add_record_to_block(bh, rec_len)) {
     rc = write_block(bh, opts);
+    if (rc != 0) {
+      // Write failed - return negative error code
+      return -1;
+    }
   }
+  
+  // Now add the record to the (possibly new) block
+  int truncated = copy_record_to_block(bh, rec_len, rec, opts);
+  bh->line_num++;
+  
+  // Return truncation status (0 or 1) - maintains compatibility with callers
+  rc = truncated;
   return rc;
 }
 
