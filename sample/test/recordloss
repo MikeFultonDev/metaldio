@@ -1,0 +1,71 @@
+#!/bin/sh
+
+ME=$(basename $0)
+MYDIR="$(cd "$(dirname "$0")" > /dev/null 2>&1 && pwd -P)"
+ROOT="${MYDIR}/../.."
+cd "${ROOT}"
+
+#
+# Record Loss Test
+#
+# This test verifies that no records are lost when copying large files
+# to PDSE members across block boundaries.
+#
+
+hlq=$(hlq)
+mlq="DIO.RLOSS"
+testdir="/tmp/recordloss_test_$$"
+largefile="${testdir}/large_ascii_1mb.txt"
+largeps="${hlq}.${mlq}.PS"
+largepdse="${hlq}.${mlq}.PDSE"
+expected_lines=100
+
+drm -f "${largeps}" 2>/dev/null || true
+drm -f "${largepdse}" 2>/dev/null || true
+mkdir -p "${testdir}"
+
+#
+# Create a fixed-block PS dataset with IEBDG so the generated content has
+# multiple newline-delimited records after copying to USS.
+# 1MB / 1024-byte records = 1024 records.
+# dtouch space values need explicit units; use tracks.
+# 1MB = 1048576 bytes, 1 track = 56664 bytes, so allocate 19 tracks.
+#
+
+dtouch -tSEQ -l1024 -rFB -s19TRK -e2TRK "${largeps}"
+dtouch -tPDSE -l1024 -rFB -s19TRK -e2TRK "${largepdse}"
+
+mvscmd --pgm=IEBDG --out="${largeps},old" --sysprint=stdout --sysin=stdin > /dev/null 2>&1 << EOF
+  DSD OUTPUT=(OUT)
+  FD  NAME=FIELD1,LENGTH=1024,FORMAT=AL,ACTION=RP
+  CREATE QUANTITY=100,NAME=FIELD1
+  END
+EOF
+
+cp "//'${largeps}'" "${largefile}"
+
+mkdir -p "${ROOT}/data"
+cp "${largefile}" "${ROOT}/data/large.txt"
+
+sample/bin/f2m -i data "${largepdse}" large.txt
+
+#
+# Verify no records were lost
+#
+
+result_lines=$(dcat "${largepdse}(LARGE)" | awk NF | wc -l)
+
+if [ "${result_lines}" -eq "${expected_lines}" ]; then
+    echo "PASS: All ${expected_lines} lines preserved"
+    rm -rf "${testdir}"
+    drm -f "${largeps}"
+    drm -f "${largepdse}"
+    exit 0
+else
+    lost_lines=$((expected_lines - result_lines))
+    echo "FAIL: ${lost_lines} lines lost (expected ${expected_lines}, got ${result_lines})"
+    rm -rf "${testdir}"
+    drm -f "${largeps}"
+    drm -f "${largepdse}"
+    exit 1
+fi
