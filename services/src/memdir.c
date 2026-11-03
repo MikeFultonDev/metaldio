@@ -495,6 +495,7 @@ MEMDIR* openmemdir(const char* dataset, int sort_time, int sort_reverse, const D
 
   struct desp* PTR32 desp = get_desp_all(bh, opts);
   if (desp == NULL) {
+    close_pds(bh, opts);
     return NULL;
   }
   struct mstat* de_mstat = desp_to_mstats(desp, opts, &de_members);

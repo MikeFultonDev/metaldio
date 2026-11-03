@@ -12,7 +12,7 @@ void* PTR32 MALLOC24(unsigned int bytes)
   ptr24 = MALOC24A(bytes);
   void* PTR32 ptr = (void* PTR32) ptr24;
   if (ptr24 == 0) {
-    fprintf(stderr, "Internal Error: Unable to allocate %d bytes below the bar\n", bytes);
+    fprintf(stderr, "Internal Error: Unable to allocate %d bytes below the line\n", bytes);
   } else {
 #ifdef DEBUG
   memset(ptr, 0xFE, bytes);
@@ -32,7 +32,7 @@ void* PTR32 MALLOC31(unsigned int bytes)
 {
   void* PTR32 p = __malloc31(bytes);
   if (p == 0) {
-    fprintf(stderr, "Internal Error: Unable to allocate %d bytes below the line\n", bytes);
+    fprintf(stderr, "Internal Error: Unable to allocate %d bytes below the bar\n", bytes);
   } else {
 #ifdef DEBUG
   memset(p, 0xFE, bytes);
