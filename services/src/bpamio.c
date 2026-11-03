@@ -27,6 +27,57 @@
 #include "memdir.h"
 #include "iob.h"
 
+static int bpam_close(FM_BPAMHandle* handle, const DBG_Opts* opts)
+{
+  const struct closecb closecb_template = { 1, 0, 0 };
+  struct closecb* PTR32 closecb;
+  int rc;
+
+  closecb = MALLOC31(sizeof(struct closecb));
+  if (!closecb) {
+    errmsg(opts, "Unable to obtain storage for CLOSE cb\n");
+    return 4;
+  }
+  *closecb = closecb_template;
+  closecb->dcb24 = handle->dcb;
+
+  rc = CLOSE(closecb);
+  FREE31(closecb);
+  if (rc) {
+    errmsg(opts, "Unable to perform CLOSE. rc:%d\n", rc);
+  }
+  return rc;
+}
+
+/*
+ * Release the storage bpam_open obtained. The DCB must be closed (or never opened).
+ * Most of it is below the line, where a program that opens many PDSs would otherwise
+ * run out of storage after a few hundred opens.
+ */
+static void bpam_free(FM_BPAMHandle* handle)
+{
+  if (handle->block) {
+    FREE24(handle->block, handle->block_size);
+    handle->block = 0;
+  }
+  if (handle->decb) {
+    FREE24(handle->decb, sizeof(struct decb));
+    handle->decb = 0;
+  }
+  if (handle->opencb) {
+    FREE31(handle->opencb);
+    handle->opencb = 0;
+  }
+  if (handle->dcbe) {
+    FREE31(handle->dcbe);
+    handle->dcbe = 0;
+  }
+  if (handle->dcb) {
+    FREE24(handle->dcb, sizeof(struct ihadcb));
+    handle->dcb = 0;
+  }
+}
+
 static int bpam_open(FM_BPAMHandle* handle, int mode, const DBG_Opts* opts)
 {
   struct ihadcb* PTR32 dcb;
@@ -37,11 +88,17 @@ static int bpam_open(FM_BPAMHandle* handle, int mode, const DBG_Opts* opts)
   const struct opencb opencb_template = { 1, 0, 0, 0, 0 };
   int rc;
 
+  /*
+   * Each piece of storage is recorded in the handle as soon as it is obtained,
+   * so that a failed open can release it (see open_pds_failed).
+   */
   dcb = dcb_init(handle->ddname);
   if (!dcb) {
     errmsg(opts, "Unable to obtain storage for OPEN dcb\n");
     return 4;
   }
+  handle->dcb = dcb;
+  handle->dcbe = dcb->dcbdcbe;
 
   /*
    * DCB set to PO, BPAM INPUT|OUTPUT and POINT
@@ -66,6 +123,7 @@ static int bpam_open(FM_BPAMHandle* handle, int mode, const DBG_Opts* opts)
     errmsg(opts, "Unable to obtain storage for OPEN cb\n");
     return 4;
   }
+  handle->opencb = opencb;
   *opencb = opencb_template;
   opencb->dcb24 = dcb;
   opencb->mode = mode;
@@ -86,15 +144,12 @@ static int bpam_open(FM_BPAMHandle* handle, int mode, const DBG_Opts* opts)
     errmsg(opts, "Unable to obtain storage for WRITE decb\n");
     return 4;
   }
+  handle->decb = decb;
   block = MALLOC24(dcb->dcbblksi);
   if (!block) {
     errmsg(opts, "Unable to obtain storage for WRITE block\n");
     return 4;
   }
-
-  handle->dcb = dcb;
-  handle->opencb = opencb;
-  handle->decb = decb;
   handle->block = block;
   handle->block_size = dcb->dcbblksi;
   handle->bytes_used = 0;
@@ -710,6 +765,7 @@ static int write_pds_member_dir_entry(struct ihadcb* PTR32 dcb, const char* memb
   stowlist->add = *stowlistadd;
 
   int rc = STOW(stowlist, dcb, STOW_R);
+  FREE24(stowlist, sizeof(struct stowlist_add));
   if (rc == STOW_REPLACE_MEMBER_DOES_NOT_EXIST || rc == STOW_CC_OK) {
     debug(opts, "Member %s successfully replaced\n", member);
     rc = 0;
@@ -750,7 +806,8 @@ int write_member_dir_entry(const struct mstat* mstat, FM_BPAMHandle* bh, const D
 
   if ((!stowlist) || (!stowlistadd)) {
     errmsg(opts, "Unable to obtain storage for STOW\n");
-    return 4;
+    rc = 4;
+    goto free_stowlists;
   }
 
   add_mem_stats(stowlistadd, mstat, bh->memstart_ttr, opts);
@@ -773,7 +830,6 @@ int write_member_dir_entry(const struct mstat* mstat, FM_BPAMHandle* bh, const D
       break;
     case STOW_IFF_CC_PDS_UPDATE_UNSUPPORTED:
       debug(opts, "Member %s is in a PDS - do a STOW and not a STOW_IFF\n", mstat->name);
-      free(stowlist);
       rc = write_pds_member_dir_entry(bh->dcb, mstat->name, stowlistadd, opts);
       break;
     case STOW_IFF_CC_MEMBER_EXISTS:
@@ -783,6 +839,17 @@ int write_member_dir_entry(const struct mstat* mstat, FM_BPAMHandle* bh, const D
     default:
       errmsg(opts, "STOW failed for member %s create. rc:0x%x\n", mstat->name, rc);
       break;
+  }
+
+free_stowlists:
+  /*
+   * The lists came from MALLOC24 (STORAGE OBTAIN), so they go back with FREE24, not free()
+   */
+  if (stowlist) {
+    FREE24(stowlist, sizeof(struct stowlist_iff));
+  }
+  if (stowlistadd) {
+    FREE24(stowlistadd, sizeof(struct stowlist_add));
   }
   return rc;
 }
@@ -813,6 +880,38 @@ static int alloc_pds(const char* dataset, FM_BPAMHandle* bh, const DBG_Opts* opt
   return 0;
 }
 
+static int unalloc_pds(FM_BPAMHandle* bh, const DBG_Opts* opts)
+{
+  struct s99_common_text_unit dd = { DUNDDNAM, 1, 0, 0 };
+  int ddname_len = strlen(bh->ddname);
+  dd.s99tulng = ddname_len;
+  memcpy(dd.s99tupar, bh->ddname, ddname_len);
+
+  int rc = ddfree(&dd);
+  debug(opts, "Free DD:%s\n", bh->ddname);
+  return rc;
+}
+
+/*
+ * Undo whatever a failed open_pds_for_read or open_pds_for_write did:
+ * close the DCB if OPEN got that far, release the storage, free the DD.
+ */
+static void open_pds_failed(FM_BPAMHandle* bh, const DBG_Opts* opts)
+{
+  if (bh->dcb && (bh->dcb->dcboflgs & dcbofopn)) {
+    if (bpam_close(bh, opts)) {
+      /* the DCB is still open, so its storage and the DD stay as they are */
+      free(bh);
+      return;
+    }
+  }
+  bpam_free(bh);
+  if (bh->ddname[0]) {
+    unalloc_pds(bh, opts);
+  }
+  free(bh);
+}
+
 FM_BPAMHandle* open_pds_for_read(const char* dataset, const DBG_Opts* opts)
 {
   FM_BPAMHandle * bh = calloc(sizeof(FM_BPAMHandle), 1);
@@ -824,6 +923,7 @@ FM_BPAMHandle* open_pds_for_read(const char* dataset, const DBG_Opts* opts)
     rc = bpam_open_read(bh, opts);
   }
   if (rc) {
+    open_pds_failed(bh, opts);
     return NULL;
   } else {
     return bh;
@@ -841,6 +941,7 @@ FM_BPAMHandle* open_pds_for_write(const char* dataset, const DBG_Opts* opts)
     rc = bpam_open_write(bh, opts);
   }
   if (rc) {
+    open_pds_failed(bh, opts);
     return NULL;
   } else {
     return bh;
@@ -849,31 +950,13 @@ FM_BPAMHandle* open_pds_for_write(const char* dataset, const DBG_Opts* opts)
 
 int close_pds(FM_BPAMHandle* bh, const DBG_Opts* opts)
 {
-  const struct closecb closecb_template = { 1, 0, 0 };
-  struct closecb* PTR32 closecb;
-  int rc;
-
-  struct s99_common_text_unit dd = { DUNDDNAM, 1, 0, 0 };
-  int ddname_len = strlen(bh->ddname);
-  dd.s99tulng = ddname_len;
-  memcpy(dd.s99tupar, bh->ddname, ddname_len);
-
-  closecb = MALLOC31(sizeof(struct closecb));
-  if (!closecb) {
-    errmsg(opts, "Unable to obtain storage for CLOSE cb\n");
-    return 4;
-  }
-  *closecb = closecb_template;
-  closecb->dcb24 = bh->dcb;
-
-  rc = CLOSE(closecb);
+  int rc = bpam_close(bh, opts);
   if (rc) {
-    errmsg(opts, "Unable to perform CLOSE. rc:%d\n", rc);
     return rc;
   }
+  bpam_free(bh);
 
-  rc = ddfree(&dd);
-  debug(opts, "Free DD:%s\n", bh->ddname);
+  rc = unalloc_pds(bh, opts);
 
   free(bh);
 

@@ -4,6 +4,7 @@
   struct FM_BPAMHandle_InternalStruct {
     char ddname[DD_MAX+1];
     struct ihadcb* PTR32 dcb;
+    struct dcbe* PTR32 dcbe;
     struct opencb* PTR32 opencb;
     struct decb* PTR32 decb;
     void* PTR32 block;
